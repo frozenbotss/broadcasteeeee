@@ -142,6 +142,6 @@ async def main():
         start_web_server()
     )
     logging.info("✅ Broadcast bot is running...")
-    await bot.idle()  # Keep bot alive
+    await bot.run()  # Keep bot alive
 
 asyncio.run(main())
