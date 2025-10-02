@@ -11,7 +11,6 @@ from pyrogram.errors import (
     RPCError,
     FloodWait
 )
-from aiohttp import web
 
 # ==========================
 # CONFIG
@@ -75,6 +74,7 @@ async def broadcast_handler(_, message):
             continue
 
         try:
+            # Forward the message (works for any type)
             sent_msg = await bot.forward_messages(
                 chat_id=target_chat_id,
                 from_chat_id=broadcast_message.chat.id,
@@ -83,6 +83,7 @@ async def broadcast_handler(_, message):
             success += 1
             logging.info(f"✅ Forwarded to {target_chat_id}")
 
+            # Try pinning with notifications ON
             try:
                 await bot.pin_chat_message(
                     chat_id=target_chat_id,
@@ -95,8 +96,9 @@ async def broadcast_handler(_, message):
 
         except FloodWait as e:
             logging.warning(f"⏳ FloodWait detected: Sleeping for {e.value}s...")
-            await asyncio.sleep(e.value)
+            await asyncio.sleep(e.value)  # Respect flood wait completely
             logging.info("🔄 Resuming broadcast after FloodWait")
+            # Do not retry here; just continue to next iteration
             continue
 
         except (ChatWriteForbidden, UserIsBlocked,
@@ -109,9 +111,11 @@ async def broadcast_handler(_, message):
             logging.error(f"❌ Failed to forward to {target_chat_id}: {e}")
             failed += 1
 
+        # Log progress every 50 messages
         if processed % 50 == 0:
             logging.info(f"📊 Progress: {processed}/{total} | ✅ {success} | ❌ {failed}")
 
+        # Small delay to avoid instant flooding
         await asyncio.sleep(0.5)
 
     logging.info(f"✅ Broadcast finished! Total: {total} | Success: {success} | Failed: {failed}")
@@ -119,29 +123,7 @@ async def broadcast_handler(_, message):
 
 
 # ==========================
-# HTTP SERVER
+# START BOT
 # ==========================
-async def handle_root(request):
-    return web.Response(text="bot is alive baby")
-
-async def start_web_server():
-    app = web.Application()
-    app.add_routes([web.get("/", handle_root)])
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", int(os.environ.get("PORT", 8080)))
-    await site.start()
-    logging.info("🌐 HTTP server running on port 8080")
-
-# ==========================
-# MAIN
-# ==========================
-async def main():
-    await asyncio.gather(
-        bot.start(),
-        start_web_server()
-    )
-    logging.info("✅ Broadcast bot is running...")
-    await bot.run()  # Keep bot alive
-
-asyncio.run(main())
+print("✅ Broadcast bot is running...")
+bot.run()
