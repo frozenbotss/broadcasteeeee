@@ -116,7 +116,7 @@ async def broadcast_handler(_, message):
             logging.info(f"📊 Progress: {processed}/{total} | ✅ {success} | ❌ {failed}")
 
         # Small delay to avoid instant flooding
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1)
 
     logging.info(f"✅ Broadcast finished! Total: {total} | Success: {success} | Failed: {failed}")
     await message.reply(f"📢 Broadcast complete!\n✅ Success: {success}\n❌ Failed & removed: {failed}")
